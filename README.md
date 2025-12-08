@@ -2,8 +2,14 @@
 This project is a Python bot that automates the process of logging into Gmail, joining a Google Meet, recording the audio of the meeting, and then generating a summary, key points, action items, and sentiment analysis of the meeting. 
 
 
-## Recording video/audio/transcripts from video conferencing calls
+# Sponsored
+
+## Recall.AI
+### Recording video/audio/transcripts from video conferencing calls
 If you’re looking to use this repo to retrieve video/audio streams or transcripts from meeting platforms like Zoom, Google Meet, Microsoft Teams, consider checking out [Recall.ai](https://www.recall.ai/product/meeting-bot-api/google-meet?utm_source=github&utm_medium=sponsorship&utm_campaign=dhruvldrp9-google-meet-bot), an API for meeting recording.
+
+
+
 ![Alt Text](https://github.com/dhruvldrp9/Google-Meet-Bot/blob/main/GoogleMeetBot.jpeg)
 
 ## Prerequisites
