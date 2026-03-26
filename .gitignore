@@ -49,8 +49,9 @@ bin/
 
 # Sensitive Files
 .env
+.env.*
+!.env.example
 .DS_Store
-*.env
 
 # Virtual Environments
 venv/
@@ -69,3 +70,5 @@ venv/
 # IDE specific files
 .history
 .vs
+
+.claude/
