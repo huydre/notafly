@@ -1,0 +1,24 @@
+run:
+  timeout: 5m
+
+linters:
+  enable:
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - bodyclose
+    - gosec
+    - misspell
+
+linters-settings:
+  gosec:
+    excludes:
+      - G104 # unhandled errors in deferred calls
+
+issues:
+  exclude-dirs:
+    - old
+    - plans

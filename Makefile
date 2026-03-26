@@ -1,4 +1,4 @@
-.PHONY: build build-server run run-server test lint clean
+.PHONY: build build-server run run-server test lint clean docker
 
 build:
 	go build -o bin/notafly ./cmd/cli
@@ -20,5 +20,8 @@ lint:
 
 clean:
 	rm -rf bin/
+
+docker:
+	docker build -t notafly .
 
 all: clean build build-server
