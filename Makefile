@@ -1,12 +1,15 @@
-.PHONY: build build-cli run test lint clean
+.PHONY: build build-server run run-server test lint clean
 
 build:
-	go build -o bin/notafly-server ./cmd/server
-
-build-cli:
 	go build -o bin/notafly ./cmd/cli
 
+build-server:
+	go build -o bin/notafly-server ./cmd/server
+
 run:
+	go run ./cmd/cli serve
+
+run-server:
 	go run ./cmd/server
 
 test:
@@ -18,4 +21,4 @@ lint:
 clean:
 	rm -rf bin/
 
-all: clean build build-cli
+all: clean build build-server
