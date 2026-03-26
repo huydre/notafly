@@ -19,7 +19,9 @@ func setupTestRouter() *gin.Engine {
 	cfg := &config.Config{}
 	logger := zap.NewNop()
 	meetSvc := service.NewMeetService(cfg, logger)
-	h := New(cfg, logger, meetSvc)
+	recorderSvc := service.NewRecorderService(cfg, logger)
+	transcriberSvc := service.NewTranscriberService(cfg, logger)
+	h := New(cfg, logger, meetSvc, recorderSvc, transcriberSvc)
 
 	r := gin.New()
 	r.GET("/health", h.Health)

@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/hnam/notafly/internal/dto"
+	"go.uber.org/zap"
 )
 
 func (h *Handler) Transcribe(c *gin.Context) {
@@ -17,8 +18,36 @@ func (h *Handler) Transcribe(c *gin.Context) {
 		return
 	}
 
-	// TODO: Phase 5 — wire TranscriberService
-	c.JSON(http.StatusNotImplemented, dto.ErrorResponse{
-		Error: "not implemented yet",
+	h.logger.Info("transcribing audio", zap.String("path", req.AudioPath))
+
+	if req.NoAnalysis {
+		// Transcribe only — no GPT analysis
+		text, err := h.transcriberSvc.Transcribe(c.Request.Context(), req.AudioPath)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
+				Error:   "transcription failed",
+				Details: err.Error(),
+			})
+			return
+		}
+		c.JSON(http.StatusOK, dto.TranscribeResponse{
+			Transcription: text,
+		})
+		return
+	}
+
+	// Full pipeline: transcribe + analyze
+	result, err := h.transcriberSvc.TranscribeAndAnalyze(c.Request.Context(), req.AudioPath, h.recorderSvc)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
+			Error:   "transcription and analysis failed",
+			Details: err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, dto.TranscribeResponse{
+		Transcription: result.Text,
+		Minutes:       &result.Minutes,
 	})
 }

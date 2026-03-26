@@ -33,9 +33,11 @@ func main() {
 
 	// Services
 	meetSvc := service.NewMeetService(cfg, logger)
+	recorderSvc := service.NewRecorderService(cfg, logger)
+	transcriberSvc := service.NewTranscriberService(cfg, logger)
 
 	// Handler
-	h := handler.New(cfg, logger, meetSvc)
+	h := handler.New(cfg, logger, meetSvc, recorderSvc, transcriberSvc)
 
 	// Router
 	router := setupRouter(h, logger)

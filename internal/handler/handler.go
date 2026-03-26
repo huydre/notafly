@@ -7,15 +7,19 @@ import (
 )
 
 type Handler struct {
-	config  *config.Config
-	logger  *zap.Logger
-	meetSvc *service.MeetService
+	config        *config.Config
+	logger        *zap.Logger
+	meetSvc       *service.MeetService
+	recorderSvc   *service.RecorderService
+	transcriberSvc *service.TranscriberService
 }
 
-func New(cfg *config.Config, logger *zap.Logger, meetSvc *service.MeetService) *Handler {
+func New(cfg *config.Config, logger *zap.Logger, meetSvc *service.MeetService, recorderSvc *service.RecorderService, transcriberSvc *service.TranscriberService) *Handler {
 	return &Handler{
-		config:  cfg,
-		logger:  logger,
-		meetSvc: meetSvc,
+		config:        cfg,
+		logger:        logger,
+		meetSvc:       meetSvc,
+		recorderSvc:   recorderSvc,
+		transcriberSvc: transcriberSvc,
 	}
 }
