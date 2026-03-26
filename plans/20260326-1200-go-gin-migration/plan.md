@@ -34,7 +34,7 @@ Since user wants **Gin** (web framework), the migration transforms this from CLI
 | 1 | [Project Setup & Config](phase-01-project-setup.md) | ✅ | Go module, project structure, config loading |
 | 2 | [Core Models & DTOs](phase-02-models-dtos.md) | ✅ | Request/response structs, domain types |
 | 3 | [Browser Automation](phase-03-browser-automation.md) | ✅ | chromedp-based Meet joining |
-| 4 | [Audio Recording & Processing](phase-04-audio-processing.md) | ⬜ | ffmpeg-based recording, WAV handling |
+| 4 | [Audio Recording & Processing](phase-04-audio-processing.md) | ✅ | ffmpeg-based recording, WAV handling |
 | 5 | [OpenAI Integration](phase-05-openai-integration.md) | ⬜ | Whisper transcription + GPT analysis |
 | 6 | [Gin HTTP API](phase-06-gin-api.md) | ⬜ | REST endpoints, middleware, error handling |
 | 7 | [CLI Mode](phase-07-cli-mode.md) | ⬜ | Cobra CLI wrapping the service layer |
