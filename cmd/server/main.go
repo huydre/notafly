@@ -13,6 +13,7 @@ import (
 	"github.com/hnam/notafly/internal/config"
 	"github.com/hnam/notafly/internal/handler"
 	"github.com/hnam/notafly/internal/middleware"
+	"github.com/hnam/notafly/internal/service"
 	"go.uber.org/zap"
 )
 
@@ -30,8 +31,11 @@ func main() {
 		logger.Fatal("failed to load config", zap.Error(err))
 	}
 
+	// Services
+	meetSvc := service.NewMeetService(cfg, logger)
+
 	// Handler
-	h := handler.New(cfg, logger)
+	h := handler.New(cfg, logger, meetSvc)
 
 	// Router
 	router := setupRouter(h, logger)

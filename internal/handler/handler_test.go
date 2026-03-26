@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/hnam/notafly/internal/config"
 	"github.com/hnam/notafly/internal/dto"
+	"github.com/hnam/notafly/internal/service"
 	"go.uber.org/zap"
 )
 
@@ -17,7 +18,8 @@ func setupTestRouter() *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	cfg := &config.Config{}
 	logger := zap.NewNop()
-	h := New(cfg, logger)
+	meetSvc := service.NewMeetService(cfg, logger)
+	h := New(cfg, logger, meetSvc)
 
 	r := gin.New()
 	r.GET("/health", h.Health)
@@ -100,15 +102,14 @@ func TestTranscribe_InvalidRequest(t *testing.T) {
 	}
 }
 
-func TestJoinMeet_ValidRequest_ReturnsNotImplemented(t *testing.T) {
+func TestFullPipeline_ValidRequest_ReturnsNotImplemented(t *testing.T) {
 	router := setupTestRouter()
 	w := httptest.NewRecorder()
 	body := `{"meet_link": "https://meet.google.com/abc-defg-hij", "duration": 60}`
-	req, _ := http.NewRequest("POST", "/api/v1/meet/join", strings.NewReader(body))
+	req, _ := http.NewRequest("POST", "/api/v1/meet/full", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	router.ServeHTTP(w, req)
 
-	// Should return 501 until service layer is wired (Phase 3)
 	if w.Code != http.StatusNotImplemented {
 		t.Errorf("status = %d, want %d", w.Code, http.StatusNotImplemented)
 	}
