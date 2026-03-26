@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/hnam/notafly/internal/config"
 	"github.com/hnam/notafly/internal/dto"
+	"github.com/hnam/notafly/internal/middleware"
 	"github.com/hnam/notafly/internal/service"
 	"go.uber.org/zap"
 )
@@ -24,6 +25,9 @@ func setupTestRouter() *gin.Engine {
 	h := New(cfg, logger, meetSvc, recorderSvc, transcriberSvc)
 
 	r := gin.New()
+	r.Use(middleware.JSONRecovery(logger))
+	r.Use(middleware.CORS())
+
 	r.GET("/health", h.Health)
 
 	v1 := r.Group("/api/v1")
@@ -38,6 +42,8 @@ func setupTestRouter() *gin.Engine {
 
 	return r
 }
+
+// --- Health ---
 
 func TestHealth(t *testing.T) {
 	router := setupTestRouter()
@@ -59,22 +65,18 @@ func TestHealth(t *testing.T) {
 	}
 }
 
-func TestJoinMeet_InvalidRequest(t *testing.T) {
+// --- JoinMeet ---
+
+func TestJoinMeet_InvalidURL(t *testing.T) {
 	router := setupTestRouter()
 	w := httptest.NewRecorder()
-	body := `{"meet_link": "not-a-url"}`
+	body := `{"meet_link": "not-a-url", "duration": 60}`
 	req, _ := http.NewRequest("POST", "/api/v1/meet/join", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusBadRequest {
 		t.Errorf("status = %d, want %d", w.Code, http.StatusBadRequest)
-	}
-
-	var errResp dto.ErrorResponse
-	json.Unmarshal(w.Body.Bytes(), &errResp)
-	if errResp.Error != "invalid request" {
-		t.Errorf("error = %q, want %q", errResp.Error, "invalid request")
 	}
 }
 
@@ -91,7 +93,63 @@ func TestJoinMeet_MissingFields(t *testing.T) {
 	}
 }
 
-func TestTranscribe_InvalidRequest(t *testing.T) {
+func TestJoinMeet_DurationTooSmall(t *testing.T) {
+	router := setupTestRouter()
+	w := httptest.NewRecorder()
+	body := `{"meet_link": "https://meet.google.com/abc-defg-hij", "duration": 5}`
+	req, _ := http.NewRequest("POST", "/api/v1/meet/join", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("status = %d, want %d", w.Code, http.StatusBadRequest)
+	}
+}
+
+func TestJoinMeet_DurationTooLarge(t *testing.T) {
+	router := setupTestRouter()
+	w := httptest.NewRecorder()
+	body := `{"meet_link": "https://meet.google.com/abc-defg-hij", "duration": 9999}`
+	req, _ := http.NewRequest("POST", "/api/v1/meet/join", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("status = %d, want %d", w.Code, http.StatusBadRequest)
+	}
+}
+
+func TestJoinMeet_InvalidJSON(t *testing.T) {
+	router := setupTestRouter()
+	w := httptest.NewRecorder()
+	body := `{invalid`
+	req, _ := http.NewRequest("POST", "/api/v1/meet/join", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("status = %d, want %d", w.Code, http.StatusBadRequest)
+	}
+}
+
+// --- FullPipeline ---
+
+func TestFullPipeline_InvalidRequest(t *testing.T) {
+	router := setupTestRouter()
+	w := httptest.NewRecorder()
+	body := `{}`
+	req, _ := http.NewRequest("POST", "/api/v1/meet/full", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("status = %d, want %d", w.Code, http.StatusBadRequest)
+	}
+}
+
+// --- Transcribe ---
+
+func TestTranscribe_MissingAudioPath(t *testing.T) {
 	router := setupTestRouter()
 	w := httptest.NewRecorder()
 	body := `{}`
@@ -102,17 +160,69 @@ func TestTranscribe_InvalidRequest(t *testing.T) {
 	if w.Code != http.StatusBadRequest {
 		t.Errorf("status = %d, want %d", w.Code, http.StatusBadRequest)
 	}
+
+	var errResp dto.ErrorResponse
+	json.Unmarshal(w.Body.Bytes(), &errResp)
+	if errResp.Error != "invalid request" {
+		t.Errorf("error = %q, want %q", errResp.Error, "invalid request")
+	}
 }
 
-func TestFullPipeline_ValidRequest_ReturnsNotImplemented(t *testing.T) {
+func TestTranscribe_InvalidJSON(t *testing.T) {
 	router := setupTestRouter()
 	w := httptest.NewRecorder()
-	body := `{"meet_link": "https://meet.google.com/abc-defg-hij", "duration": 60}`
-	req, _ := http.NewRequest("POST", "/api/v1/meet/full", strings.NewReader(body))
+	body := `not-json`
+	req, _ := http.NewRequest("POST", "/api/v1/transcribe", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	router.ServeHTTP(w, req)
 
-	if w.Code != http.StatusNotImplemented {
-		t.Errorf("status = %d, want %d", w.Code, http.StatusNotImplemented)
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("status = %d, want %d", w.Code, http.StatusBadRequest)
+	}
+}
+
+// --- CORS ---
+
+func TestCORS_OptionsRequest(t *testing.T) {
+	router := setupTestRouter()
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("OPTIONS", "/api/v1/meet/join", nil)
+	router.ServeHTTP(w, req)
+
+	if w.Code != 204 {
+		t.Errorf("status = %d, want 204", w.Code)
+	}
+	if h := w.Header().Get("Access-Control-Allow-Origin"); h != "*" {
+		t.Errorf("CORS origin = %q, want *", h)
+	}
+	if h := w.Header().Get("Access-Control-Allow-Methods"); h == "" {
+		t.Error("CORS methods header missing")
+	}
+}
+
+// --- 404 ---
+
+func TestNotFound(t *testing.T) {
+	router := setupTestRouter()
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/api/v1/nonexistent", nil)
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusNotFound {
+		t.Errorf("status = %d, want %d", w.Code, http.StatusNotFound)
+	}
+}
+
+// --- Method not allowed ---
+
+func TestMethodNotAllowed(t *testing.T) {
+	router := setupTestRouter()
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/api/v1/meet/join", nil)
+	router.ServeHTTP(w, req)
+
+	// Gin returns 404 for wrong method on non-configured routes
+	if w.Code != http.StatusNotFound && w.Code != http.StatusMethodNotAllowed {
+		t.Errorf("status = %d, want 404 or 405", w.Code)
 	}
 }

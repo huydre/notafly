@@ -74,7 +74,7 @@ func main() {
 func setupRouter(h *handler.Handler, logger *zap.Logger) *gin.Engine {
 	r := gin.New()
 
-	r.Use(gin.Recovery())
+	r.Use(middleware.JSONRecovery(logger))
 	r.Use(middleware.CORS())
 	r.Use(middleware.RequestLogger(logger))
 
